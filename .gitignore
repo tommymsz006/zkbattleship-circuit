@@ -1,19 +1,7 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
-# compiled output
-/dist
-/tmp
-/out-tsc
-/build
-# Only exists if Bazel was run
-/bazel-out
-
 # dependencies
 /node_modules
-
-# profiling files
-chrome-profiler-events*.json
-speed-measure-plugin*.json
 
 # IDEs and editors
 /.idea
@@ -32,16 +20,29 @@ speed-measure-plugin*.json
 !.vscode/extensions.json
 .history/*
 
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
-
 # System Files
 .DS_Store
 Thumbs.db
+
+# compiled output (truffle)
+/build
+
+# circom (dependencies and generated outputs)
+/circom/circomlib
+/circom/*.sol
+/circom/*.json
+!/circom/input.json
+
+# zokrates (generated outputs)
+/zokrates/out*
+/zokrates/*.json
+/zokrates/*.sol
+/zokrates/*.docker
+/zokrates/*.key
+
+# custom
+/contracts/verifier.sol
+/zokrates/code/*.code.*
+/zokrates/docker_scripts
+/circom/*showhash*
+/circom/*.ts
