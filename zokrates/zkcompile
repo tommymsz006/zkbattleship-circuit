@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# requires: code file (e.g. battleship.code)
+
+zokrates compile -i $@
+rm -f out.code
+zokrates setup
+zokrates export-verifier
+rm -f verification.key
+
+# output: out, proving.key, verifier.sol
