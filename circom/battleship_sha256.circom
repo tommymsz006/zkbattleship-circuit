@@ -21,6 +21,7 @@ template Battleship() {
     signal input targetY;
     signal output out;
 
+    signal isInRange;
     signal isCarrierHit;
     signal isBattleshipHit;
     signal isCruiserHit;
@@ -34,6 +35,10 @@ template Battleship() {
 
     shipHash[0] === sha256p.out[0];
     shipHash[1] === sha256p.out[1];
+
+    // map check
+    isInRange <-- (targetX >= 0 && targetX <= 9 && targetY >= 0 && targetY <= 9);
+    isInRange === 1;
 
     // hit check
     isCarrierHit <-- (carrierO == 0 && targetX == carrierX && targetY >= carrierY && targetY <= carrierY + 4) || (carrierO == 1 && targetY == carrierY && targetX >= carrierX && targetX <= carrierX + 4);
