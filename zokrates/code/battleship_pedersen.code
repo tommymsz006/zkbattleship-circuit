@@ -9,9 +9,7 @@ def main( private field carrierX, private field carrierY, private field carrierO
     h[1] == shipHash[1]
 
     // map check
-
-
-    // overlap check
+    true == (targetX >= 0 && targetX <= 9 && targetY >= 0 && targetY <= 9)
 
     // hit check and return
     // true = Hit, false = Missed
