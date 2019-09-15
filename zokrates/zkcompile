@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# exit when any command fails
+set -e
+
 # requires: code file (e.g. battleship.code)
 
 zokrates compile -i $@
