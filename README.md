@@ -2,7 +2,7 @@
 
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
-zkbattleship-circuit consists of the zkSNARKs arithmetic circuit implementation for [zkbattleship](https://github.com/tommymsz006/zkbattleship), a prototype Battleship game built on zkSNARKs proof and verification.
+`zkbattleship-circuit` consists of the zkSNARKs arithmetic circuit implementation for [zkbattleship](https://github.com/tommymsz006/zkbattleship), a prototype [Battleship](https://en.wikipedia.org/wiki/Battleship_(game)) game built on zkSNARKs proof and verification.
 
 Currently it has the circuit implementations in [ZoKrates](https://github.com/Zokrates/ZoKrates) (which can generate verifier in form of Ethereum smart contract), as well as [circom](https://github.com/iden3/circom) (which can then be used with [snarkjs](https://github.com/iden3/snarkjs)).
 
@@ -91,6 +91,7 @@ Verifier contract (`verifier.sol`) can be deployed to the network using `truffle
 cd contracts
 
 # softlink to verifier.sol generated either by ZoKrates or circom
+# circom's one is required for zkbattleship
 ln -s ../zokrates/verifier.sol
 ln -s ../circom/verifier.sol
 
