@@ -34,7 +34,7 @@ You may find the basics of the lifecycle of zkSNARKs proof and verification [her
 
 Both Pedersen (see more at [ethresear.ch](https://ethresear.ch/t/cheap-hash-functions-for-zksnark-merkle-tree-proofs-which-can-be-calculated-on-chain/3176) and [Zcash](https://github.com/zcash/zcash/issues/2234)) and SHA256 hash implementations are available, you may choose the ones that you need to compile.
 
-Pedersen hash implementation is recommended for zkSNARKs efficiency.
+Pedersen hash implementation is recommended for zkSNARKs efficiency - see more in [Notes on Hashing](#notes-on-hashing).
 
 For [ZoKrates](https://github.com/Zokrates/ZoKrates):
 
@@ -103,3 +103,24 @@ truffle migrate
 See more details around [ganache-cli](https://github.com/trufflesuite/ganache-cli) and [truffle](https://www.trufflesuite.com/truffle).
 
 `truffle-config.js` is in its basic configuration for local development. Additional networks (e.g. Kovan testnet) can be manually configured there.
+
+## Notes on Hashing
+
+There have been different discussions on whether/how hashing can be made more efficient in arithmetic circuits for zkSNARKs use; see [Zcash forum](https://github.com/zcash/zcash/issues/2234) and [ethresear.ch](https://ethresear.ch/t/cheap-hash-functions-for-zksnark-merkle-tree-proofs-which-can-be-calculated-on-chain/3176).
+
+For this battleship use case, taking [circom's hash](https://iden3-docs.readthedocs.io/en/latest/iden3_repos/research/publications/zkproof-standards-workshop-2/pedersen-hash/pedersen.html) as an example, Pedersen Hash is proved to be more efficent in terms of the resulting number of wires (>88% reduction) and constraints (>97% reduction), compared with the SHA-256 counterpart:
+
+```
+> ./zkcompile battleship_pedersen.circom 
+# Wires: 3540
+# Constraints: 708
+# Private Inputs: 15
+# Public Inputs: 4
+# Outputs: 1
+> ./zkcompile battleship_sha256.circom 
+# Wires: 31366
+# Constraints: 29785
+# Private Inputs: 15
+# Public Inputs: 4
+# Outputs: 1
+```
