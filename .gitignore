@@ -1,48 +1,20 @@
-# See http://help.github.com/ignore-files/ for more about ignoring files.
-
 # dependencies
-/node_modules
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
-
-# System Files
-.DS_Store
-Thumbs.db
+node_modules
 
 # compiled output (truffle)
-/build
+cache
+artifacts
 
-# circom (dependencies and generated outputs)
-/circom/circomlib
-/circom/*.sol
-/circom/*.json
-!/circom/input.json
-
-# zokrates (generated outputs)
-/zokrates/out*
-/zokrates/*.json
-/zokrates/*.sol
-/zokrates/*.docker
-/zokrates/*.key
+# # # circom (dependencies and generated outputs)
+# # /circom/circomlib
+# # /circom/*.sol
+# # /circom/*.json
+# !/circom/input.json
 
 # custom
-/contracts/verifier.sol
-/zokrates/code/*.code.*
-/zokrates/docker_scripts
-/circom/*showhash*
-/circom/*.ts
+# /contracts/verifier.sol
+# /circom/*showhash*
+# /circom/*.ts
+
+.env
+yarn-error.log

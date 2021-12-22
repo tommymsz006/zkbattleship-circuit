@@ -1,21 +1,21 @@
-include "circomlib/circuits/pedersen.circom";
+include "../node_modules/circomlib/circuits/pedersen.circom";
 
 template Battleship() {
-    signal private input carrierX;
-    signal private input carrierY;
-    signal private input carrierO;
-    signal private input battleshipX;
-    signal private input battleshipY;
-    signal private input battleshipO;
-    signal private input cruiserX;
-    signal private input cruiserY;
-    signal private input cruiserO;
-    signal private input submarineX;
-    signal private input submarineY;
-    signal private input submarineO;
-    signal private input destroyerX;
-    signal private input destroyerY;
-    signal private input destroyerO;
+    signal input carrierX;
+    signal input carrierY;
+    signal input carrierO;
+    signal input battleshipX;
+    signal input battleshipY;
+    signal input battleshipO;
+    signal input cruiserX;
+    signal input cruiserY;
+    signal input cruiserO;
+    signal input submarineX;
+    signal input submarineY;
+    signal input submarineO;
+    signal input destroyerX;
+    signal input destroyerY;
+    signal input destroyerO;
     signal input shipHash[2];
     signal input targetX;
     signal input targetY;
@@ -28,6 +28,7 @@ template Battleship() {
     signal isSubmarineHit;
     signal isDestroyerHit;
     signal isHit;
+    
 
     // hash check
     component hash = Pedersen(256);
@@ -36,26 +37,26 @@ template Battleship() {
     for (var i = 0; i < 256; i++) {
         hash.in[i] <-- n2b.out[i];
     }
-    shipHash[0] === hash.out[0];
-    shipHash[1] === hash.out[1];
+    // // shipHash[0] === hash.out[0];
+    // // shipHash[1] === hash.out[1];
 
-    // map check
-    isInRange <-- (targetX >= 0 && targetX <= 9 && targetY >= 0 && targetY <= 9);
-    isInRange === 1;
+    // // map check
+    // isInRange <-- (targetX >= 0 && targetX <= 9 && targetY >= 0 && targetY <= 9);
+    // isInRange === 1;
 
-    // hit check
-    isCarrierHit <-- (carrierO == 0 && targetX == carrierX && targetY >= carrierY && targetY <= carrierY + 4) || (carrierO == 1 && targetY == carrierY && targetX >= carrierX && targetX <= carrierX + 4);
+    // // hit check
+    // isCarrierHit <-- (carrierO == 0 && targetX == carrierX && targetY >= carrierY && targetY <= carrierY + 4) || (carrierO == 1 && targetY == carrierY && targetX >= carrierX && targetX <= carrierX + 4);
 
-    isBattleshipHit <-- (battleshipO == 0 && targetX == battleshipX && targetY >= battleshipY && targetY <= battleshipY + 3) || (battleshipO == 1 && targetY == battleshipY && targetX >= battleshipX && targetX <= battleshipX + 3);
+    // isBattleshipHit <-- (battleshipO == 0 && targetX == battleshipX && targetY >= battleshipY && targetY <= battleshipY + 3) || (battleshipO == 1 && targetY == battleshipY && targetX >= battleshipX && targetX <= battleshipX + 3);
 
-    isCruiserHit <-- (cruiserO == 0 && targetX == cruiserX && targetY >= cruiserY && targetY <= cruiserY + 2) || (cruiserO == 1 && targetY == cruiserY && targetX >= cruiserX && targetX <= cruiserX + 2);
+    // isCruiserHit <-- (cruiserO == 0 && targetX == cruiserX && targetY >= cruiserY && targetY <= cruiserY + 2) || (cruiserO == 1 && targetY == cruiserY && targetX >= cruiserX && targetX <= cruiserX + 2);
 
-    isSubmarineHit <-- (submarineO == 0 && targetX == submarineX && targetY >= submarineY && targetY <= submarineY + 2) || (submarineO == 1 && targetY == submarineY && targetX >= submarineX && targetX <= submarineX + 2);
+    // isSubmarineHit <-- (submarineO == 0 && targetX == submarineX && targetY >= submarineY && targetY <= submarineY + 2) || (submarineO == 1 && targetY == submarineY && targetX >= submarineX && targetX <= submarineX + 2);
 
-    isDestroyerHit <-- (destroyerO == 0 && targetX == destroyerX && targetY >= destroyerY && targetY <= destroyerY + 1) || (destroyerO == 1 && targetY == destroyerY && targetX >= destroyerX && targetX <= destroyerX + 1);
+    // isDestroyerHit <-- (destroyerO == 0 && targetX == destroyerX && targetY >= destroyerY && targetY <= destroyerY + 1) || (destroyerO == 1 && targetY == destroyerY && targetX >= destroyerX && targetX <= destroyerX + 1);
 
-    isHit <-- (isCarrierHit || isBattleshipHit || isCruiserHit || isSubmarineHit || isDestroyerHit);
-    out <== isHit;
+    // isHit <-- (isCarrierHit || isBattleshipHit || isCruiserHit || isSubmarineHit || isDestroyerHit);
+    // out <== isHit;
 }
 
 component main = Battleship();
