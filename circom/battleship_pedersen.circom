@@ -1,62 +1,58 @@
 include "../node_modules/circomlib/circuits/pedersen.circom";
 
-template Battleship() {
-    signal input carrierX;
-    signal input carrierY;
-    signal input carrierO;
-    signal input battleshipX;
-    signal input battleshipY;
-    signal input battleshipO;
-    signal input cruiserX;
-    signal input cruiserY;
-    signal input cruiserO;
-    signal input submarineX;
-    signal input submarineY;
-    signal input submarineO;
-    signal input destroyerX;
-    signal input destroyerY;
-    signal input destroyerO;
-    signal input shipHash[2];
-    signal input targetX;
-    signal input targetY;
+template ShipHit() {
+    signal input target[2];
+    signal input ship[4]; //0: x, 1: y, 2: z (ship length), 3: o (orientation)
     signal output out;
+    signal horizontal;
+    signal vertical;
+  
+    horizontal <-- (ship[3] == 0 && target[0] == ship[0] && target[1] >= ship[1] && target[1] <= ship[1] + ship[2]);
+    vertical <-- (ship[3] == 1 && target[0] >= ship[0] && target[0] <= ship[0] + ship[2] && target[1] == target[1]);
+    out <-- (horizontal == 1 || vertical == 1);
+}
 
-    signal isInRange;
-    signal isCarrierHit;
-    signal isBattleshipHit;
-    signal isCruiserHit;
-    signal isSubmarineHit;
-    signal isDestroyerHit;
-    signal isHit;
+template Battleship() {
+    signal input ships[5][3];
+    signal input shipHash[2];
+    signal input target[2];
+    signal output out;
     
+    signal hashCheck;
+    signal isInRange;
 
     // hash check
     component hash = Pedersen(256);
     component n2b = Num2Bits(256);
-    n2b.in <-- carrierX + carrierY * 16 + carrierO * (16**2) + battleshipX * (16**3) + battleshipY * (16**4) + battleshipO * (16**5) + cruiserX * (16**6) + cruiserY * (16**7) + cruiserO * (16**8) + submarineX * (16**9) + submarineY * (16**10) + submarineO * (16**11) + destroyerX * (16**12) + destroyerY * (16**13) + destroyerO * (16**14);
-    for (var i = 0; i < 256; i++) {
-        hash.in[i] <-- n2b.out[i];
+
+    var num = 0;
+    for (var i = 0; i < 5; i++) {
+        num += ships[i][0] * (16**(i*3)) + ships[i][1] * (16**((i*3)+1)) + ships[i][2] * (16**((i*3)+2));
     }
-    // // shipHash[0] === hash.out[0];
-    // // shipHash[1] === hash.out[1];
+    n2b.in <== num;
+    for (var i = 0; i < 256; i++) {
+        hash.in[i] <== n2b.out[i];
+    }
+    assert(shipHash[0] == hash.out[0] && shipHash[1] == hash.out[1]);
+    
+    // range check
+    isInRange <-- (target[0] >= 0 && target[0] <= 9 && target[1] >= 0 && target[1] <= 9);
+    assert(isInRange == 1);
 
-    // // map check
-    // isInRange <-- (targetX >= 0 && targetX <= 9 && targetY >= 0 && targetY <= 9);
-    // isInRange === 1;
-
-    // // hit check
-    // isCarrierHit <-- (carrierO == 0 && targetX == carrierX && targetY >= carrierY && targetY <= carrierY + 4) || (carrierO == 1 && targetY == carrierY && targetX >= carrierX && targetX <= carrierX + 4);
-
-    // isBattleshipHit <-- (battleshipO == 0 && targetX == battleshipX && targetY >= battleshipY && targetY <= battleshipY + 3) || (battleshipO == 1 && targetY == battleshipY && targetX >= battleshipX && targetX <= battleshipX + 3);
-
-    // isCruiserHit <-- (cruiserO == 0 && targetX == cruiserX && targetY >= cruiserY && targetY <= cruiserY + 2) || (cruiserO == 1 && targetY == cruiserY && targetX >= cruiserX && targetX <= cruiserX + 2);
-
-    // isSubmarineHit <-- (submarineO == 0 && targetX == submarineX && targetY >= submarineY && targetY <= submarineY + 2) || (submarineO == 1 && targetY == submarineY && targetX >= submarineX && targetX <= submarineX + 2);
-
-    // isDestroyerHit <-- (destroyerO == 0 && targetX == destroyerX && targetY >= destroyerY && targetY <= destroyerY + 1) || (destroyerO == 1 && targetY == destroyerY && targetX >= destroyerX && targetX <= destroyerX + 1);
-
-    // isHit <-- (isCarrierHit || isBattleshipHit || isCruiserHit || isSubmarineHit || isDestroyerHit);
-    // out <== isHit;
+    // check for hit
+    component ISH[5];
+    var lengths[5] = [5, 4, 3, 3, 2];
+    for (var i = 0; i < 5; i++) {
+        ISH[i] = ShipHit();
+        ISH[i].target[0] <== target[0];
+        ISH[i].target[1] <== target[1];
+        ISH[i].ship[0] <== ships[i][0];
+        ISH[i].ship[1] <== ships[i][1];
+        ISH[i].ship[2] <== lengths[i];
+        ISH[i].ship[3] <== ships[i][2];
+    }
+    out <-- (ISH[0].out == 1 || ISH[1].out == 1 || ISH[2].out == 1 || ISH[3].out == 1 || ISH[4].out == 1);
+    log(out);
 }
 
 component main = Battleship();

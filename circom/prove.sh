@@ -8,8 +8,6 @@ node generate_witness.js battleship_pedersen.wasm ../input.json ../witness.wtns
 cd ..
 # create proof
 mkdir proof
-echo a
 snarkjs groth16 prove ./zkey/battleship_pedersen_0001.zkey witness.wtns ./proof/public.json ./proof/proof.json
 # local validity check
-echo b
 snarkjs groth16 verify verification_key.json ./proof/public.json ./proof/proof.json

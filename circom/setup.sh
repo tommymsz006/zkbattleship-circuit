@@ -2,7 +2,6 @@
 
 # exit when any command fails
 set -e
-# set working directory
 
 # compile circuit
 circom battleship_pedersen.circom --r1cs --wasm
