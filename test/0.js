@@ -18,9 +18,9 @@ describe("Battleship Circuit Test", () => {
     
     it("full test", async () => {
         // create hash
-        const encoded = encodeShips(ships).toBigInt()
         const sponge = await buildMimcSponge()
-        const shipHash = await sponge.multiHash([encoded])
+        const shipHash = await sponge.multiHash(ships.flat(1))
+
 
         // sign hash
         const eddsa = await buildEddsa()
@@ -30,7 +30,7 @@ describe("Battleship Circuit Test", () => {
         const sig = eddsa.signMiMCSponge(prv, m)
         assert(eddsa.verifyMiMCSponge(m, sig, pub))
         // run through circuit
-        const circuit = await wasm_tester(path.resolve(__dirname, "../circuits/board.circom"))
+        const circuit = await wasm_tester(path.resolve(__dirname, "../circuits/boardValidity.circom"))
         const witness = await circuit.calculateWitness({
             ships,
             shipHash: sponge.F.toObject(m),
@@ -47,26 +47,3 @@ describe("Battleship Circuit Test", () => {
         await circuit.assertOut(witness, { out: 1 })
     })
 })
-
-const encodeShips = (ships) => {
-    let num = BN.from(0)
-    const exponentiate = (n, pow) => {
-        // evaluate n*16^pow
-        return n.mul((BN.from(16)).pow(pow))
-    }
-    for (let i = 0; i < 5; i++) {
-        num = num
-            .add(exponentiate(BN.from(ships[i][0]), i * 3))
-            .add(exponentiate(BN.from(ships[i][1]), i * 3 + 1))
-            .add(exponentiate(BN.from(ships[i][2]), i * 3 + 2))
-    }
-    return num
-}
-
-const toHexString = (bytes) => {
-    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
-}
-
-const fromHexString = (hex) => {
-    return new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-}

@@ -3,7 +3,10 @@ pragma circom 2.0.3;
 include "../node_modules/circomlib/circuits/eddsamimcsponge.circom";
 
 // determine whether or not a starting board adheres to all rules
-template checkCorrectness() {
+// proving:
+//   - knowledge of ship placement that is valid (inbounds, no overlapping)
+//   - signature is of hash of ships by pubkey
+template boardValidity() {
     signal input ships[5][3];
     signal input shipHash;
     signal input signature[3];
@@ -38,17 +41,13 @@ template checkCorrectness() {
             }
         }
     }
-
     // authenticate hashed ship positions
-    component hash = MiMCSponge(1, 220, 1);
-    var num = 0;
-    for (var i = 0; i < 5; i++) {
-        num += ships[i][0] * (16**(i*3)) + ships[i][1] * (16**((i*3)+1)) + ships[i][2] * (16**((i*3)+2));
+    component hash = MiMCSponge(15, 220, 1);
+    for (var i = 0; i < 15; i++) {
+        hash.ins[i] <== ships[i \ 3][i % 3];
     }
-    hash.ins[0] <== num;
     hash.k <== 0;
     hash.outs[0] === shipHash;
-
     // authenticate signature on ship hash
     component verifier = EdDSAMiMCSpongeVerifier();
     verifier.enabled <== 1;
@@ -60,4 +59,4 @@ template checkCorrectness() {
     verifier.M <== shipHash;
     out <== 1;
 }
-component main = checkCorrectness();
+component main = boardValidity();
