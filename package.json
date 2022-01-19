@@ -1,0 +1,30 @@
+{
+  "name": "zkbattleship-circuit",
+  "version": "2.0.0",
+  "description": "Hardhat + Circom Zero Knowledge Battleship",
+  "main": "hardhat.config.js",
+  "scripts": {
+    "test": "mocha --timeout=200000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jp4g/zkbattleship-circuit.git"
+  },
+  "author": "@jp4g",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jp4g/zkbattleship-circuit/issues"
+  },
+  "homepage": "https://github.com/jp4g/zkbattleship-circuit#readme",
+  "dependencies": {
+    "chai": "^4.3.4",
+    "circom_tester": "^0.0.9",
+    "circomlib": "^2.0.2",
+    "circomlibjs": "^0.1.1",
+    "dotenv": "^10.0.0",
+    "ethers": "^5.5.2",
+    "ffjavascript": "^0.2.46",
+    "mocha": "^9.1.3",
+    "snarkjs": "^0.4.10"
+  }
+}
