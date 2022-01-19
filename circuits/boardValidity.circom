@@ -8,11 +8,8 @@ include "../node_modules/circomlib/circuits/eddsamimcsponge.circom";
 //   - signature is of hash of ships by pubkey
 template boardValidity() {
     signal input ships[5][3];
-    signal input shipHash;
     signal input signature[3];
     signal input pubkey[2];
-
-    signal output out;
 
     var board[10][10];
     var lengths[5] = [5, 4, 3, 3, 2];
@@ -25,11 +22,10 @@ template boardValidity() {
         // range checks
         assert(z == 0 || z == 1); // false for horizontal, true for vertical
         assert(x <= 9 && y <= 9);
-        if (z == 0) {
+        if (z == 0)
             assert(x + lengths[i] <= 9);
-        } else {
+        else
             assert(y + lengths[i] <= 9);
-        }
         // collision checks
         for (var j = 0; j < lengths[i]; j++) {
             if (z == 0) {
@@ -41,13 +37,11 @@ template boardValidity() {
             }
         }
     }
-    // authenticate hashed ship positions
+    // hash ship positions
     component hash = MiMCSponge(15, 220, 1);
-    for (var i = 0; i < 15; i++) {
+    for (var i = 0; i < 15; i++)
         hash.ins[i] <== ships[i \ 3][i % 3];
-    }
     hash.k <== 0;
-    hash.outs[0] === shipHash;
     // authenticate signature on ship hash
     component verifier = EdDSAMiMCSpongeVerifier();
     verifier.enabled <== 1;
@@ -56,7 +50,6 @@ template boardValidity() {
     verifier.R8x <== signature[0];
     verifier.R8y <== signature[1];
     verifier.S <== signature[2];
-    verifier.M <== shipHash;
-    out <== 1;
+    verifier.M <== hash.outs[0];
 }
 component main = boardValidity();

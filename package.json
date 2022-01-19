@@ -18,9 +18,11 @@
   "homepage": "https://github.com/jp4g/zkbattleship-circuit#readme",
   "dependencies": {
     "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
     "circom_tester": "^0.0.9",
     "circomlib": "^2.0.2",
     "circomlibjs": "^0.1.1",
+    "crypto": "^1.0.1",
     "dotenv": "^10.0.0",
     "ethers": "^5.5.2",
     "ffjavascript": "^0.2.46",
