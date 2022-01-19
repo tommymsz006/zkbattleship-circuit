@@ -1,20 +1,3 @@
-# dependencies
 node_modules
-
-# compiled output (truffle)
-cache
-artifacts
-
-# # # circom (dependencies and generated outputs)
-# # /circom/circomlib
-# # /circom/*.sol
-# # /circom/*.json
-# !/circom/input.json
-
-# custom
-# /contracts/verifier.sol
-# /circom/*showhash*
-# /circom/*.ts
-
 .env
 yarn-error.log
