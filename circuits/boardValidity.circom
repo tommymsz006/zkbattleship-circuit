@@ -8,8 +8,8 @@ include "../node_modules/circomlib/circuits/eddsamimcsponge.circom";
 //   - signature is of hash of ships by pubkey
 template boardValidity() {
     signal input ships[5][3];
-    signal input signature[3];
     signal input pubkey[2];
+    signal input signature[3];
 
     var board[10][10];
     var lengths[5] = [5, 4, 3, 3, 2];
@@ -52,4 +52,4 @@ template boardValidity() {
     verifier.S <== signature[2];
     verifier.M <== hash.outs[0];
 }
-component main = boardValidity();
+component main { public [signature] }= boardValidity();
