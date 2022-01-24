@@ -111,3 +111,13 @@ contract BattleshipGame is ERC721 {
         ticket.transfer(_to, balance);
     }
 }
+
+struct Turn {
+    uint256 nonce;
+    // reporting result for previous shot
+    bytes32 prevTurnRoot; //merkle root for previous turn to provably link
+    bool hit;
+    bool lost;
+    // send new shot
+    uint8[2] shot;
+}
