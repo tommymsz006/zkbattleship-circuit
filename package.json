@@ -4,7 +4,9 @@
   "description": "Hardhat + Circom Zero Knowledge Battleship",
   "main": "hardhat.config.js",
   "scripts": {
-    "test": "mocha --timeout=200000"
+    "test": "mocha --timeout=200000",
+    "setup:ptau": "./scripts/ptau.sh",
+    "setup:circuits": "./scripts/circuits.sh"
   },
   "repository": {
     "type": "git",

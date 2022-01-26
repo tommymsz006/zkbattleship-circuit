@@ -4,9 +4,12 @@
 module.exports = async ({ getNamedAccounts, deployments }) => {
     // get deploying account
     const { operator } = await getNamedAccounts();
-    // deploy board integrity verifier
-    const { address: verifierAddress } = await deployments.deploy('BoardVerifier', {
-        contract: 'Verifier',
+    // deploy verifiers
+    const { address: bvAddress } = await deployments.deploy('BoardVerifier', {
+        from: operator,
+        log: true
+    })
+    const { address: svAddress } = await deployments.deploy('ShotVerifier', {
         from: operator,
         log: true
     })
@@ -20,7 +23,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const { address: gameAddress } = await deployments.deploy('ZKBGame', {
         contract: 'BattleshipGame',
         from: operator,
-        args: [verifierAddress, ticketAddress],
+        args: [bvAddress, svAddress, ticketAddress],
         log: true
     })
 }

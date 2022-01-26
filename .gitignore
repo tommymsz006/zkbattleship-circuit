@@ -3,3 +3,11 @@ node_modules
 yarn-error.log
 cache
 artifacts
+
+#zk
+zk/board*
+zk/shot*
+zk/proof
+zk/ptau
+zk/witnesses
+zk/zkey
