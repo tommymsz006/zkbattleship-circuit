@@ -27,6 +27,16 @@ describe('Play Battleship on-chain', async () => {
         ]
     }
 
+    // shots alice must make to win the game
+    const shots = [
+        [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
+        [1, 1], [2, 1], [3, 1], [4, 1],
+        [1, 2], [2, 2], [3, 2],
+        [1, 3], [2, 3], [3, 3],
+        [1, 4], [2, 4]
+    ]
+
+
 
     before(async () => {
         // instantiate mimc sponge on bn254 curve
@@ -111,6 +121,111 @@ describe('Play Battleship on-chain', async () => {
                 args[1],
                 args[2]
             ))
+        })
+        it("opening shot", async () => {
+            await (await game.connect(alice).firstTurn(1, [1, 0])).wait()
+        })
+        it("prove hit and make next shot", async () => {
+            const boardHash = await mimcSponge.multiHash(boards.bob.flat())
+            const input = {
+                ships: boards.bob,
+                hash: mimcSponge.F.toObject(boardHash),
+                coords: [1, 0],
+                hit: 1
+            }
+            await genWtns(
+                input,
+                'zk/shot_js/shot.wasm',
+                'zk/witnesses/shot0.wtns'
+            )
+            const { proof, publicSignals } = await snarkjs.groth16.prove(
+                'zk/zkey/shot_final.zkey',
+                'zk/witnesses/shot0.wtns'
+            )
+            await snarkjs.groth16.verify(
+                require('../zk/shot_verification_key.json'),
+                publicSignals,
+                proof
+            )
+            const args = buildArgs(proof, publicSignals)
+            const tx = await (await game.connect(bob).turn(
+                1,
+                true,
+                [8, 8],
+                args[0],
+                args[1],
+                args[2]
+            )).wait()
+        })
+        it("prove miss and make next shot", async () => {
+            const boardHash = await mimcSponge.multiHash(boards.alice.flat())
+            const input = {
+                ships: boards.alice,
+                hash: mimcSponge.F.toObject(boardHash),
+                coords: [8, 8],
+                hit: 0
+            }
+            await genWtns(
+                input,
+                'zk/shot_js/shot.wasm',
+                'zk/witnesses/shot1.wtns'
+            )
+            const { proof, publicSignals } = await snarkjs.groth16.prove(
+                'zk/zkey/shot_final.zkey',
+                'zk/witnesses/shot1.wtns'
+            )
+            await snarkjs.groth16.verify(
+                require('../zk/shot_verification_key.json'),
+                publicSignals,
+                proof
+            )
+            const args = buildArgs(proof, publicSignals)
+            const tx = await (await game.connect(alice).turn(
+                1,
+                false,
+                [1, 1],
+                args[0],
+                args[1],
+                args[2]
+            )).wait()
+        })
+        xit("play to alice win", async () => {
+            // I DON'T CARE THIS IS MESSY IT IS SUPER RUDIMENTARY DEMO
+            // ALICE HIT TWO
+            const hashes = {
+                alice: await mimcSponge.multiHash(boards.alice.flat()),
+                bob: await mimcSponge.multiHash(boards.bob.flat())
+            }
+            let input = {
+                ships: boards.bob,
+                hash: mimcSponge.F.toObject(hashes.bob),
+                coords: [1, 1],
+                hit: 1
+            }
+            await genWtns(
+                input,
+                'zk/shot_js/shot.wasm',
+                'zk/witnesses/shot2.wtns'
+            )
+            let { proof, publicSignals } = await snarkjs.groth16.prove(
+                'zk/zkey/shot_final.zkey',
+                'zk/witnesses/shot2.wtns'
+            )
+            await snarkjs.groth16.verify(
+                require('../zk/shot_verification_key.json'),
+                publicSignals,
+                proof
+            )
+            let args = buildArgs(proof, publicSignals)
+            let tx = await (await game.connect(alice).turn(
+                1,
+                false,
+                [8, 7],
+                args[0],
+                args[1],
+                args[2]
+            )).wait()
+
         })
     })
 

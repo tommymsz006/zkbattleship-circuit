@@ -4,6 +4,7 @@ pragma solidity >=0.8.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./IVerifier.sol";
+import "hardhat/console.sol";
 
 contract BattleshipGame is ERC721 {
     uint256 constant HIT_MAX = 17;
@@ -17,7 +18,7 @@ contract BattleshipGame is ERC721 {
     uint256 gameIndex;
     address operator;
 
-    mapping(uint256 => Game) games;
+    mapping(uint256 => Game) public games;
     mapping(address => uint256) playing;
 
     IBoardVerifier bv; // verifier for proving initial board rule compliance
@@ -50,7 +51,7 @@ contract BattleshipGame is ERC721 {
         address current = games[_game].nonce % 2 == 0
             ? games[_game].participants[0]
             : games[_game].participants[1];
-        require(msg.sender == current, "");
+        require(msg.sender == current, "oper");
         _;
     }
 
