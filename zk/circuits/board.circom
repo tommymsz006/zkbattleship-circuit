@@ -40,8 +40,6 @@ template board() {
     for (var i = 0; i < 15; i++)
         hasher.ins[i] <== ships[i \ 3][i % 3];
     hasher.k <== 0;
-    log(hash);
-    log(hasher.outs[0]);
     hash === hasher.outs[0];
 }
 
