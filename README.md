@@ -4,23 +4,27 @@
 
 This fork of `zkbattleship-circuit` uses a zkSNARK arithmetic circuit implementation by [tommymsz006](https://github.com/tommymsz006/zkbattleship), a prototype [Battleship](https://en.wikipedia.org/wiki/Battleship_(game)) game built on zkSNARKs proof and verification. It is being updated for 2022 and work is in progress.
 
-1. run POT15 ceremony (@todo rename old pot12 naming)
+## Steps to run and install demo (requires Unix)
+0. [Ensure circom is installed locally](https://web.archive.org/web/20211104133455/https://docs.circom.io/getting-started/installation/)
+1. run POT15 ceremony (⏰ expected 10 minute run time ⏰)
 ```
-yarn setup:ptau
+yarn ptau
 ```
-2. run zkey and verification key compilation and export
+2. Build zkeys and verification keys for each circuit, then export to Solidity contract (⌛ expected 3 minute run time ⌛)
 ```
-yarn setup:circuits
+yarn setup
 ```
-3. VERY JANKY: 
- * manually rename Verifier -> BoardVerifier in contracts/BoardVerifier.sol, change `solidity pragma 0.8.6`;
- * manually rename Verifier -> ShotVerifier in contracts/ShotVerifier.sol, change `solidity pragma 0.8.6`;
-4. test on-chain locally
+3. Test local demonstration of full battleship game driven by ZK-Snarks
 ```
-npx hardhat test
+yarn hardhat test
 ```
-- [x] board creation proof
-- [x] hit/miss proof
-- [x] base case unit testing on-chain
-- [ ] full unit testing-chain
-- [ ] incremental merkle proof to rollup game in one on-chain tx
+4. Add mnemonic, infura key to .env (see .example.env as well)
+```
+MNEMONIC=word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12
+INFURA=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+Ensure first 3 accounts are funded to deploy/ interact with contracts
+5. Test on-chain demonstration of full battleship game driven by ZK-Snarks (example goerli)
+```
+yarn hardhat test --network goerli
+```

@@ -4,23 +4,17 @@ require("@nomiclabs/hardhat-waffle")
 require('hardhat-deploy')
 require('hardhat-deploy-ethers')
 
-const {
-    INFURA_RPC,
-    XDAI_RPC,
-    SOKOL_RPC,
-    MNEMONIC,
-    PKEY
-} = process.env
+const { INFURA_RPC, MNEMONIC } = process.env
 
-const accounts = PKEY
-    ? //Private key overrides mnemonic - leave pkey empty in .env if using mnemonic
-    [`0x${PKEY}`]
-    : {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 10,
-    };
+const XDAI_RPC = 'https://rpc.xdaichain.com/'
+const SOKOL_RPC = 'https://sokol.poa.network'
+
+const accounts = {
+    mnemonic: MNEMONIC,
+    path: "m/44'/60'/0'/0",
+    initialIndex: 0,
+    count: 10,
+};
 
 module.exports = {
     solidity: {
@@ -34,11 +28,11 @@ module.exports = {
     },
     networks: {
         goerli: {
-            url: `https://goerli.infura.io/v3/2623565f59b94e47b0eb5a9286f3a070`,
+            url: `https://goerli.infura.io/v3/${INFURA_RPC}`,
             accounts
         },
         rinkeby: {
-            url: `rinkeby.infura.io/v3/$${INFURA_RPC}`,
+            url: `https://rinkeby.infura.io/v3/${INFURA_RPC}`,
             accounts
         },
         xdai: {

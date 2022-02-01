@@ -4,16 +4,16 @@
   "description": "Hardhat + Circom Zero Knowledge Battleship",
   "main": "hardhat.config.js",
   "scripts": {
-    "test": "mocha --timeout=200000",
-    "setup:ptau": "./scripts/ptau.sh",
-    "setup:circuits": "./scripts/circuits.sh"
+    "test": "yarn hardhat test",
+    "ptau": "./scripts/ptau.sh",
+    "setup": "./scripts/circuits.sh"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jp4g/zkbattleship-circuit.git"
   },
   "author": "@jp4g",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/jp4g/zkbattleship-circuit/issues"
   },

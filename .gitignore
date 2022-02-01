@@ -4,7 +4,7 @@ yarn-error.log
 cache
 artifacts
 
-#zk
+#zk ignore
 zk/board*
 zk/shot*
 zk/ptau
