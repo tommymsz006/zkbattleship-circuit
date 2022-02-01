@@ -19,7 +19,7 @@ contract BattleshipGame is ERC721 {
     address operator;
 
     mapping(uint256 => Game) public games;
-    mapping(address => uint256) playing;
+    mapping(address => uint256) public playing;
 
     IBoardVerifier bv; // verifier for proving initial board rule compliance
     IShotVerifier sv; // verifier for proving shot hit/ miss
@@ -213,6 +213,30 @@ contract BattleshipGame is ERC721 {
         uint256 balance = ticket.balanceOf(address(this));
         emit Collected(balance);
         ticket.transfer(_to, balance);
+    }
+
+    /**
+     * Return current game info
+     *
+     * @param _game uint256 - id of game to look for
+     * @return _participants address[2] - addresses of host and guest players respectively
+     * @return _boards uint256[2] - hashes of host and guest boards respectively
+     * @return _turnNonce uint256 - the current turn number for the game
+     * @return _hitNonce uint256[2] - the current number of hits host and guest have scored respectively
+     * @return _winner address - if game is won, will show winner
+     */
+    function gameState(uint256 _game) public view returns (
+        address[2] memory _participants,
+        uint256[2] memory _boards,
+        uint256 _turnNonce,
+        uint256[2] memory _hitNonce,
+        address _winner
+    ) {
+        _participants = games[_game].participants;
+        _boards = games[_game].boards;
+        _turnNonce = games[_game].nonce;
+        _hitNonce = games[_game].hitNonce;
+        _winner = games[_game].winner;
     }
 }
 

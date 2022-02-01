@@ -34,7 +34,7 @@ module.exports = {
     },
     networks: {
         goerli: {
-            url: `goerli.infura.io/v3/${INFURA_RPC}`,
+            url: `https://goerli.infura.io/v3/2623565f59b94e47b0eb5a9286f3a070`,
             accounts
         },
         rinkeby: {
@@ -50,10 +50,7 @@ module.exports = {
             accounts
         }
     },
-    namedAccounts: {
-        operator: 0,
-        alice: 1,
-        bob: 2,
-        charlie: 3
+    mocha: {
+        timeout: 2000000
     }
 }

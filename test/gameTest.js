@@ -1,15 +1,52 @@
 const { ethers } = require('hardhat')
-const snarkjs = require('snarkjs')
-const { buildArgs, genWtns } = require('./utils')
 const { buildMimcSponge } = require("circomlibjs")
-const { BigNumber: BN } = ethers
+const snarkjs = require('snarkjs')
+
+// verification key json files
+const verificationKeys = {
+    board: require('../zk/board_verification_key.json'),
+    shot: require('../zk/shot_verification_key.json')
+}
+
+/**
+ * Build contract call args
+ * @dev 'massage' circom's proof args into format parsable by solidity
+ * 
+ * @param {*} proof 
+ * @param {*} publicSignals 
+ * @returns 
+ */
+function buildArgs(proof, publicSignals) {
+    return [
+        proof.pi_a.slice(0, 2), // pi_a
+        // genZKSnarkProof reverses values in the inner arrays of pi_b
+        [
+            proof.pi_b[0].slice(0).reverse(),
+            proof.pi_b[1].slice(0).reverse(),
+        ], // pi_b
+        proof.pi_c.slice(0, 2), // pi_c
+        publicSignals, // input
+    ]
+}
+
+// inline ephemeral logging
+function printLog(msg) {
+    if (process.stdout.isTTY) {
+        process.stdout.clearLine(-1);
+        process.stdout.cursorTo(0);
+        process.stdout.write(msg);
+    }
+}
 
 describe('Play Battleship on-chain', async () => {
     let game, bv, sv, token // contracts
-    let owner, alice, bob // identities
+    let alice, bob // identities
     let mimcSponge // the mimc sponge hasher
     let one = ethers.utils.parseUnits('1', 'ether') // 1e18
+    let F // finite field lib
+    let boardHashes = { alice: null, bob: null } // board hashes, computed later
 
+    // x, y, z (horizontal/ verical orientation) ship placements
     const boards = {
         alice: [
             ["0", "0", "0"],
@@ -27,23 +64,96 @@ describe('Play Battleship on-chain', async () => {
         ]
     }
 
-    // shots alice must make to win the game
-    const shots = [
-        [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
-        [1, 1], [2, 1], [3, 1], [4, 1],
-        [1, 2], [2, 2], [3, 2],
-        [1, 3], [2, 3], [3, 3],
-        [1, 4], [2, 4]
-    ]
+    // shots alice to hit / bob to miss
+    const shots = {
+        alice: [
+            [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
+            [1, 1], [2, 1], [3, 1], [4, 1],
+            [1, 2], [2, 2], [3, 2],
+            [1, 3], [2, 3], [3, 3],
+            [1, 4], [2, 4]
+        ],
+        bob: [
+            [9, 9], [9, 8], [9, 7], [9, 6], [9, 5],
+            [9, 4], [9, 3], [9, 2], [9, 1],
+            [9, 0], [8, 9], [8, 8],
+            [8, 7], [8, 6], [8, 5],
+            [8, 4]
+        ]
+    }
 
-
+    /**
+     * Simulate one guaranteed hit and one guaranteed miss played in the game
+     * 
+     * @param aliceNonce number - number of shots alice has already taken
+     *  - range should be 1 through 16
+     */
+    async function simulateTurn(aliceNonce) {
+        printLog(`Bob reporting result of Alice shot #${aliceNonce - 1} (Turn ${aliceNonce * 2 - 1})`)
+        /// BOB PROVES ALICE PREV REGISTERED SHOT HIT ///
+        // bob's shot hit/miss integrity proof public / private inputs
+        let input = {
+            ships: boards.bob,
+            hash: F.toObject(boardHashes.bob),
+            coords: shots.alice[aliceNonce - 1],
+            hit: 1
+        }
+        // compute witness and run through groth16 circuit for proof / signals
+        let { proof, publicSignals } = await snarkjs.groth16.fullProve(
+            input,
+            'zk/shot_js/shot.wasm',
+            'zk/zkey/shot_final.zkey'
+        )
+        // verify proof locally
+        await snarkjs.groth16.verify(verificationKeys.shot, publicSignals, proof)
+        // prove alice's registered shot hit, and register bob's next shot
+        let args = buildArgs(proof, publicSignals)
+        await (await game.connect(bob).turn(
+            1, // game id
+            true, // hit bool
+            shots.bob[aliceNonce - 1], // returning fire / next shot to register (not part of proof)
+            args[0], // pi.a
+            args[1], // pi.b
+            args[2] // pi.c
+        )).wait()
+        /// ALICE PROVES BOB PREV REGISTERED SHOT MISSED ///
+        printLog(`Alice reporting result of Bob shot #${aliceNonce - 1} (Turn ${aliceNonce * 2})`)
+        // bob's shot hit/miss integrity proof public / private inputs
+        input = {
+            ships: boards.alice,
+            hash: F.toObject(boardHashes.alice),
+            coords: shots.bob[aliceNonce - 1],
+            hit: 0
+        }
+            // compute witness and run through groth16 circuit for proof / signals
+            ; ({ proof, publicSignals } = await snarkjs.groth16.fullProve(
+                input,
+                'zk/shot_js/shot.wasm',
+                'zk/zkey/shot_final.zkey'
+            ))
+        // verify proof locally
+        await snarkjs.groth16.verify(verificationKeys.shot, publicSignals, proof)
+        // prove bob's registered shot missed, and register alice's next shot
+        args = buildArgs(proof, publicSignals)
+        await (await game.connect(alice).turn(
+            1, // game id
+            false, // hit bool
+            shots.alice[aliceNonce], // returning fire / next shot to register (not part of proof)
+            args[0], // pi.a
+            args[1], // pi.b
+            args[2] // pi.c
+        )).wait()
+    }
 
     before(async () => {
-        // instantiate mimc sponge on bn254 curve
+        // instantiate mimc sponge on bn254 curve + store ffjavascript obj reference
         mimcSponge = await buildMimcSponge()
+        F = mimcSponge.F
+        // store board hashes
+        boardHashes.alice = await mimcSponge.multiHash(boards.alice.flat())
+        boardHashes.bob = await mimcSponge.multiHash(boards.bob.flat())
         // set signers
         const signers = await ethers.getSigners()
-        owner = signers[0]
         alice = signers[1]
         bob = signers[2]
         // deploy verifiers
@@ -64,59 +174,57 @@ describe('Play Battleship on-chain', async () => {
         await (await token.connect(bob).approve(game.address, one)).wait()
     })
 
-    describe("LETS PLAY", async () => {
-        it("start new game", async () => {
-            const boardHash = await mimcSponge.multiHash(boards.alice.flat())
+    describe("Play game to completion", async () => {
+        it("Start a new game", async () => {
+            // board starting verification proof public / private inputs
             const input = {
                 ships: boards.alice,
-                hash: mimcSponge.F.toObject(boardHash)
+                hash: F.toObject(boardHashes.alice)
             }
-            await genWtns(
+            // compute witness and run through groth16 circuit for proof / signals
+            const { proof, publicSignals } = await snarkjs.groth16.fullProve(
                 input,
                 'zk/board_js/board.wasm',
-                'zk/witnesses/board0.wtns'
-            )
-            const { proof, publicSignals } = await snarkjs.groth16.prove(
                 'zk/zkey/board_final.zkey',
-                'zk/witnesses/board0.wtns'
             )
+            // verify proof locally
             await snarkjs.groth16.verify(
                 require('../zk/board_verification_key.json'),
                 publicSignals,
                 proof
             )
+            // prove on-chain hash is of valid board configuration
             const args = buildArgs(proof, publicSignals)
-            const tx = await (await game.connect(alice).newGame(
-                mimcSponge.F.toObject(boardHash),
+            await (await game.connect(alice).newGame(
+                F.toObject(boardHashes.alice),
                 args[0],
                 args[1],
                 args[2]
             )).wait()
         })
-        it("join existing game", async () => {
-            const boardHash = await mimcSponge.multiHash(boards.bob.flat())
+        it("Join an existing game", async () => {
+            // board starting verification proof public / private inputs
             const input = {
                 ships: boards.bob,
-                hash: mimcSponge.F.toObject(boardHash)
+                hash: F.toObject(boardHashes.bob)
             }
-            await genWtns(
+            // compute witness and run through groth16 circuit for proof / signals
+            const { proof, publicSignals } = await snarkjs.groth16.fullProve(
                 input,
                 'zk/board_js/board.wasm',
-                'zk/witnesses/board1.wtns'
-            )
-            const { proof, publicSignals } = await snarkjs.groth16.prove(
                 'zk/zkey/board_final.zkey',
-                'zk/witnesses/board1.wtns'
             )
+            // verify proof locally
             await snarkjs.groth16.verify(
                 require('../zk/board_verification_key.json'),
                 publicSignals,
                 proof
             )
+            // prove on-chain hash is of valid board configuration
             const args = buildArgs(proof, publicSignals)
-            const tx = await (await game.connect(bob).joinGame(
+            await (await game.connect(bob).joinGame(
                 1,
-                mimcSponge.F.toObject(boardHash),
+                F.toObject(boardHashes.bob),
                 args[0],
                 args[1],
                 args[2]
@@ -125,108 +233,37 @@ describe('Play Battleship on-chain', async () => {
         it("opening shot", async () => {
             await (await game.connect(alice).firstTurn(1, [1, 0])).wait()
         })
-        it("prove hit and make next shot", async () => {
-            const boardHash = await mimcSponge.multiHash(boards.bob.flat())
+        it('Prove hit/ miss for 32 turns', async () => {
+            for (let i = 1; i <= 16; i++) {
+                await simulateTurn(i)
+            }
+        })
+        it('Alice wins and receives award on sinking all of Bob\'s ships', async () => {
+            // bob's shot hit/miss integrity proof public / private inputs
             const input = {
                 ships: boards.bob,
-                hash: mimcSponge.F.toObject(boardHash),
-                coords: [1, 0],
+                hash: F.toObject(boardHashes.bob),
+                coords: shots.alice[16],
                 hit: 1
             }
-            await genWtns(
+            // compute witness and run through groth16 circuit for proof / signals
+            const { proof, publicSignals } = await snarkjs.groth16.fullProve(
                 input,
                 'zk/shot_js/shot.wasm',
-                'zk/witnesses/shot0.wtns'
+                'zk/zkey/shot_final.zkey'
             )
-            const { proof, publicSignals } = await snarkjs.groth16.prove(
-                'zk/zkey/shot_final.zkey',
-                'zk/witnesses/shot0.wtns'
-            )
-            await snarkjs.groth16.verify(
-                require('../zk/shot_verification_key.json'),
-                publicSignals,
-                proof
-            )
+            // verify proof locally
+            await snarkjs.groth16.verify(verificationKeys.shot, publicSignals, proof)
+            // prove alice's registered shot hit, and register bob's next shot
             const args = buildArgs(proof, publicSignals)
-            const tx = await (await game.connect(bob).turn(
-                1,
-                true,
-                [8, 8],
-                args[0],
-                args[1],
-                args[2]
+            await (await game.connect(bob).turn(
+                1, // game id
+                true, // hit bool
+                [0, 0], // shot params are ignored on reporting all ships sunk, can be any uint256
+                args[0], // pi.a
+                args[1], // pi.b
+                args[2] // pi.c
             )).wait()
-        })
-        it("prove miss and make next shot", async () => {
-            const boardHash = await mimcSponge.multiHash(boards.alice.flat())
-            const input = {
-                ships: boards.alice,
-                hash: mimcSponge.F.toObject(boardHash),
-                coords: [8, 8],
-                hit: 0
-            }
-            await genWtns(
-                input,
-                'zk/shot_js/shot.wasm',
-                'zk/witnesses/shot1.wtns'
-            )
-            const { proof, publicSignals } = await snarkjs.groth16.prove(
-                'zk/zkey/shot_final.zkey',
-                'zk/witnesses/shot1.wtns'
-            )
-            await snarkjs.groth16.verify(
-                require('../zk/shot_verification_key.json'),
-                publicSignals,
-                proof
-            )
-            const args = buildArgs(proof, publicSignals)
-            const tx = await (await game.connect(alice).turn(
-                1,
-                false,
-                [1, 1],
-                args[0],
-                args[1],
-                args[2]
-            )).wait()
-        })
-        xit("play to alice win", async () => {
-            // I DON'T CARE THIS IS MESSY IT IS SUPER RUDIMENTARY DEMO
-            // ALICE HIT TWO
-            const hashes = {
-                alice: await mimcSponge.multiHash(boards.alice.flat()),
-                bob: await mimcSponge.multiHash(boards.bob.flat())
-            }
-            let input = {
-                ships: boards.bob,
-                hash: mimcSponge.F.toObject(hashes.bob),
-                coords: [1, 1],
-                hit: 1
-            }
-            await genWtns(
-                input,
-                'zk/shot_js/shot.wasm',
-                'zk/witnesses/shot2.wtns'
-            )
-            let { proof, publicSignals } = await snarkjs.groth16.prove(
-                'zk/zkey/shot_final.zkey',
-                'zk/witnesses/shot2.wtns'
-            )
-            await snarkjs.groth16.verify(
-                require('../zk/shot_verification_key.json'),
-                publicSignals,
-                proof
-            )
-            let args = buildArgs(proof, publicSignals)
-            let tx = await (await game.connect(alice).turn(
-                1,
-                false,
-                [8, 7],
-                args[0],
-                args[1],
-                args[2]
-            )).wait()
-
         })
     })
-
 })
