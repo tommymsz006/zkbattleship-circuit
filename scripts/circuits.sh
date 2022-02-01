@@ -5,6 +5,9 @@ set -e
 # Phase 2
 # ... circuit-specific stuff
 
+# if zk/zkey does not exist, make folder
+[ -d zk/zkey ] || mkdir zk/zkey
+
 # Compile circuits
 circom zk/circuits/board.circom -o zk/ --r1cs --wasm
 circom zk/circuits/shot.circom -o zk/ --r1cs --wasm

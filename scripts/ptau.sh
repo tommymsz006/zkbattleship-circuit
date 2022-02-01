@@ -5,8 +5,11 @@ set -e
 # Phase 1
 # ... non-circuit-specific stuff
 
+# if zk/ptau does not exist, make folder
+[ -d zk/ptau ] || mkdir zk/ptau
+
 # Starts Powers Of Tau ceremony, creating the file pot15_0000.ptau
-snarkjs powersoftau new bn128 15 zk/ptau/pot15_0000.ptau -v
+yarn snarkjs powersoftau new bn128 15 zk/ptau/pot15_0000.ptau -v
 
 # Contribute to ceremony a few times...
 # As we want this to be non-interactive we'll just write something random-ish for entropy
