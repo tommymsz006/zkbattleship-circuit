@@ -14,16 +14,16 @@ yarn ptau
 ```
 yarn setup
 ```
-3. Test local demonstration of full battleship game driven by ZK-Snarks
-```
-yarn hardhat test
-```
-4. Add mnemonic, infura key to .env (see .example.env as well)
+3. Add mnemonic, infura key to .env (see .example.env as well)
 ```
 MNEMONIC=word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12
 INFURA=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 Ensure first 3 accounts are funded to deploy/ interact with contracts
+4. Test local demonstration of full battleship game driven by ZK-Snarks
+```
+yarn hardhat test
+```
 5. Test on-chain demonstration of full battleship game driven by ZK-Snarks (example goerli)
 ```
 yarn hardhat test --network goerli
