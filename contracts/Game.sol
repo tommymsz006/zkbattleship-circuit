@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.6;
+pragma solidity >=0.8.11;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./IVerifier.sol";
 import "hardhat/console.sol";
 
-contract BattleshipGame is ERC721 {
+contract BattleshipGame {
     uint256 constant HIT_MAX = 17;
 
     event Started(uint256 _nonce);
@@ -78,9 +77,7 @@ contract BattleshipGame is ERC721 {
      * @param _sv address - the address of the shot hit/miss prover
      * @param _ticket address - the address of the ERC20 token required to be spent to play the game
      */
-    constructor(address _bv, address _sv, address _ticket)
-        ERC721("ZK Battleship Medal", "xZKBx")
-    {
+    constructor(address _bv, address _sv, address _ticket) {
         bv = IBoardVerifier(_bv);
         sv = IShotVerifier(_sv);
         ticket = IERC20(_ticket);
@@ -200,7 +197,7 @@ contract BattleshipGame is ERC721 {
         game.winner = game.hitNonce[0] == HIT_MAX
             ? game.participants[0]
             : game.participants[1];
-        _mint(game.winner, _game);
+        ticket.transfer(game.winner, 1.95 ether);
         emit Won(game.winner, _game);
     }
 
