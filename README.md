@@ -13,8 +13,8 @@ yarn setup:ptau
 yarn setup:circuits
 ```
 3. VERY JANKY: 
-  a. manually rename Verifier -> BoardVerifier in contracts/BoardVerifier.sol, change `solidity pragma 0.8.6`;
-  b. manually rename Verifier -> ShotVerifier in contracts/ShotVerifier.sol, change `solidity pragma 0.8.6`;
+ * manually rename Verifier -> BoardVerifier in contracts/BoardVerifier.sol, change `solidity pragma 0.8.6`;
+ * manually rename Verifier -> ShotVerifier in contracts/ShotVerifier.sol, change `solidity pragma 0.8.6`;
 4. test on-chain locally
 ```
 npx hardhat test
