@@ -5,7 +5,14 @@
 This fork of `zkbattleship-circuit` uses a zkSNARK arithmetic circuit implementation by [tommymsz006](https://github.com/tommymsz006/zkbattleship), a prototype [Battleship](https://en.wikipedia.org/wiki/Battleship_(game)) game built on zkSNARKs proof and verification. It is being updated for 2022 and work is in progress.
 
 ## Steps to run and install demo (requires Unix)
-0. [Ensure circom is installed locally](https://web.archive.org/web/20211104133455/https://docs.circom.io/getting-started/installation/)
+0. [Ensure circom is installed locally](https://github.com/iden3/circom/blob/master/mkdocs/docs/getting-started/installation.md)
+```
+git clone https://github.com/iden3/circom.git
+cd circom
+cargo build --release
+cargo install --path circom
+cd ..
+```
 1. run POT15 ceremony (⏰ expected 10 minute run time ⏰)
 ```
 yarn ptau
