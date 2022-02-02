@@ -7,6 +7,7 @@ This fork of `zkbattleship-circuit` uses a zkSNARK arithmetic circuit implementa
 ## Steps to run and install demo (requires Unix)
 0. [Ensure Circom 2.x.x is installed locally](https://github.com/iden3/circom/blob/master/mkdocs/docs/getting-started/installation.md)
 ```
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 git clone https://github.com/iden3/circom.git
 cd circom
 cargo build --release
