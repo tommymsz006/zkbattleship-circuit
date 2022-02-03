@@ -55,10 +55,11 @@ yarn snarkjs zkey export verificationkey zk/zkey/shot_final.zkey zk/shot_verific
 
 # Export board verifier with updated name and solidity version
 snarkjs zkey export solidityverifier zk/zkey/board_final.zkey contracts/BoardVerifier.sol
-sed -i 's/0.6.11;/0.8.11;/g' contracts/BoardVerifier.sol
-sed -i 's/contract Verifier/contract BoardVerifier/g' contracts/BoardVerifier.sol
+sed -i'.bak' 's/0.6.11;/0.8.11;/g' contracts/BoardVerifier.sol
+sed -i'.bak' 's/contract Verifier/contract BoardVerifier/g' contracts/BoardVerifier.sol
 
 # Export shot verifier with updated name and solidity version
 snarkjs zkey export solidityverifier zk/zkey/shot_final.zkey contracts/ShotVerifier.sol
-sed -i'' 's/0.6.11;/0.8.11;/g' contracts/ShotVerifier.sol
-sed -i'' 's/contract Verifier/contract ShotVerifier/g' contracts/ShotVerifier.sol
+sed -i'.bak' 's/0.6.11;/0.8.11;/g' contracts/ShotVerifier.sol
+sed -i'.bak' 's/contract Verifier/contract ShotVerifier/g' contracts/ShotVerifier.sol
+rm contracts/*.bak

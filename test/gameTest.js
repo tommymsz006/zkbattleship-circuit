@@ -108,6 +108,7 @@ describe('Play Battleship on-chain', async () => {
         await snarkjs.groth16.verify(verificationKeys.shot, publicSignals, proof)
         // prove alice's registered shot hit, and register bob's next shot
         let args = buildArgs(proof, publicSignals)
+        console.log('bobargs', args)
         await (await game.connect(bob).turn(
             1, // game id
             true, // hit bool
@@ -135,6 +136,7 @@ describe('Play Battleship on-chain', async () => {
         await snarkjs.groth16.verify(verificationKeys.shot, publicSignals, proof)
         // prove bob's registered shot missed, and register alice's next shot
         args = buildArgs(proof, publicSignals)
+        console.log('aliceargs', args)
         await (await game.connect(alice).turn(
             1, // game id
             false, // hit bool
