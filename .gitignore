@@ -1,10 +1,14 @@
+#node
 node_modules
 .env
 yarn-error.log
+
+#hardhat
 cache
 artifacts
+deployments
 
-#zk ignore
+#zk
 zk/board*
 zk/shot*
 zk/ptau
