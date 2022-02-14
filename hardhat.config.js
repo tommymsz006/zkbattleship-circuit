@@ -9,6 +9,9 @@ const { INFURA, MNEMONIC, ETHERSCAN, POLYGONSCAN } = process.env
 
 const XDAI_RPC = 'https://rpc.xdaichain.com/'
 const SOKOL_RPC = 'https://sokol.poa.network'
+const HARMONY_ONE_RPC = 'https://api.harmony.one'
+const HARMONY_TEST_RPC = 'https://api.s0.b.hmny.io'
+
 
 const accounts = {
     mnemonic: MNEMONIC,
@@ -42,6 +45,14 @@ module.exports = {
         },
         sokol: {
             url: SOKOL_RPC,
+            accounts
+        },
+        harmony: {
+            url: HARMONY_ONE_RPC,
+            accounts
+        },
+        harmony_testnet: {
+            url: HARMONY_TEST_RPC,
             accounts
         }
     },

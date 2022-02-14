@@ -86,17 +86,18 @@ contract BattleshipGame {
 
     /**
      * Start a new board by uploading a valid board hash
-     *
+     * 
      * @param _boardHash uint256 - hash of ship placement on board
      */
     function newGame(
         uint256 _boardHash,
         uint256[2] memory a,
-        uint256[2][2] memory b,
+        uint256[2] memory b_0,
+        uint256[2] memory b_1,
         uint256[2] memory c
     ) public canPlay {
         require(
-            bv.verifyProof(a, b, c, [_boardHash]),
+            bv.verifyProof(a, [b_0, b_1], c, [_boardHash]),
             "Invalid Board Config!"
         );
         ticket.transferFrom(msg.sender, address(this), 1 ether);
@@ -115,11 +116,12 @@ contract BattleshipGame {
         uint256 _game,
         uint256 _boardHash,
         uint256[2] memory a,
-        uint256[2][2] memory b,
+        uint256[2] memory b_0,
+        uint256[2] memory b_1,
         uint256[2] memory c
     ) public canPlay joinable(_game) {
         require(
-            bv.verifyProof(a, b, c, [_boardHash]),
+            bv.verifyProof(a, [b_0, b_1], c, [_boardHash]),
             "Invalid Board Config!"
         );
         ticket.transferFrom(msg.sender, address(this), 1 ether);
@@ -155,7 +157,8 @@ contract BattleshipGame {
         bool _hit,
         uint256[2] memory _next,
         uint256[2] memory a,
-        uint256[2][2] memory b,
+        uint256[2] memory b_0,
+        uint256[2] memory b_1,
         uint256[2] memory c
     ) public myTurn(_game) {
         Game storage game = games[_game];
@@ -168,7 +171,7 @@ contract BattleshipGame {
         require(
             sv.verifyProof(
                 a,
-                b,
+                [b_0, b_1],
                 c,
                 [boardHash, shot[0], shot[1], hitInt]
             ),

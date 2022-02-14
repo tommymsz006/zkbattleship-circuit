@@ -1,6 +1,7 @@
 const { ethers } = require('hardhat')
 const { buildMimcSponge } = require("circomlibjs")
 const snarkjs = require('snarkjs')
+const { expect } = require('chai').use(require('chai-as-promised'))
 
 // verification key json files
 const verificationKeys = {
@@ -109,7 +110,7 @@ describe('Play Battleship on-chain', async () => {
         // prove alice's registered shot hit, and register bob's next shot
         let args = buildArgs(proof, publicSignals)
         console.log('bobargs', args)
-        await (await game.connect(bob).turn(
+        let tx = await (await game.connect(bob).turn(
             1, // game id
             true, // hit bool
             shots.bob[aliceNonce - 1], // returning fire / next shot to register (not part of proof)
@@ -117,6 +118,7 @@ describe('Play Battleship on-chain', async () => {
             args[1], // pi.b
             args[2] // pi.c
         )).wait()
+        await expect(tx).to.emit(game, 'Shot').withArgs(1, aliceNonce * 2 - 1, false)
         /// ALICE PROVES BOB PREV REGISTERED SHOT MISSED ///
         printLog(`Alice reporting result of Bob shot #${aliceNonce - 1} (Turn ${aliceNonce * 2})`)
         // bob's shot hit/miss integrity proof public / private inputs
@@ -145,6 +147,9 @@ describe('Play Battleship on-chain', async () => {
             args[1], // pi.b
             args[2] // pi.c
         )).wait()
+        await expect(tx)
+            .to.emit(game, 'Shot')
+            .withArgs(1, aliceNonce * 2, true)
     }
 
     before(async () => {
@@ -197,14 +202,17 @@ describe('Play Battleship on-chain', async () => {
             )
             // prove on-chain hash is of valid board configuration
             const args = buildArgs(proof, publicSignals)
-            await (await game.connect(alice).newGame(
+            let tx = await (await game.connect(alice).newGame(
                 F.toObject(boardHashes.alice),
                 args[0],
                 args[1],
                 args[2]
             )).wait()
+            console.log("tx", tx)
+            expect(tx).to.emit(game, 'Started').withArgs(1)
+            console.log('p')
         })
-        it("Join an existing game", async () => {
+        xit("Join an existing game", async () => {
             // board starting verification proof public / private inputs
             const input = {
                 ships: boards.bob,
@@ -232,15 +240,15 @@ describe('Play Battleship on-chain', async () => {
                 args[2]
             ))
         })
-        it("opening shot", async () => {
+        xit("opening shot", async () => {
             await (await game.connect(alice).firstTurn(1, [1, 0])).wait()
         })
-        it('Prove hit/ miss for 32 turns', async () => {
+        xit('Prove hit/ miss for 32 turns', async () => {
             for (let i = 1; i <= 16; i++) {
                 await simulateTurn(i)
             }
         })
-        it('Alice wins and receives award on sinking all of Bob\'s ships', async () => {
+        xit('Alice wins and receives award on sinking all of Bob\'s ships', async () => {
             // bob's shot hit/miss integrity proof public / private inputs
             const input = {
                 ships: boards.bob,
