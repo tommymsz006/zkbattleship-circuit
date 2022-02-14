@@ -109,16 +109,15 @@ describe('Play Battleship on-chain', async () => {
         await snarkjs.groth16.verify(verificationKeys.shot, publicSignals, proof)
         // prove alice's registered shot hit, and register bob's next shot
         let args = buildArgs(proof, publicSignals)
-        console.log('bobargs', args)
         let tx = await (await game.connect(bob).turn(
             1, // game id
             true, // hit bool
             shots.bob[aliceNonce - 1], // returning fire / next shot to register (not part of proof)
             args[0], // pi.a
-            args[1], // pi.b
+            args[1][0], // pi.b_0
+            args[1][1], //pi.b_1
             args[2] // pi.c
         )).wait()
-        await expect(tx).to.emit(game, 'Shot').withArgs(1, aliceNonce * 2 - 1, false)
         /// ALICE PROVES BOB PREV REGISTERED SHOT MISSED ///
         printLog(`Alice reporting result of Bob shot #${aliceNonce - 1} (Turn ${aliceNonce * 2})`)
         // bob's shot hit/miss integrity proof public / private inputs
@@ -138,18 +137,15 @@ describe('Play Battleship on-chain', async () => {
         await snarkjs.groth16.verify(verificationKeys.shot, publicSignals, proof)
         // prove bob's registered shot missed, and register alice's next shot
         args = buildArgs(proof, publicSignals)
-        console.log('aliceargs', args)
         await (await game.connect(alice).turn(
             1, // game id
             false, // hit bool
             shots.alice[aliceNonce], // returning fire / next shot to register (not part of proof)
             args[0], // pi.a
-            args[1], // pi.b
+            args[1][0], // pi.b_0
+            args[1][1], // pi.b_1
             args[2] // pi.c
         )).wait()
-        await expect(tx)
-            .to.emit(game, 'Shot')
-            .withArgs(1, aliceNonce * 2, true)
     }
 
     before(async () => {
@@ -204,15 +200,13 @@ describe('Play Battleship on-chain', async () => {
             const args = buildArgs(proof, publicSignals)
             let tx = await (await game.connect(alice).newGame(
                 F.toObject(boardHashes.alice),
-                args[0],
-                args[1],
-                args[2]
+                args[0], //pi.a
+                args[1][0], //pi.b_0
+                args[1][1], //pi.b_1
+                args[2] //pi.c
             )).wait()
-            console.log("tx", tx)
-            expect(tx).to.emit(game, 'Started').withArgs(1)
-            console.log('p')
         })
-        xit("Join an existing game", async () => {
+        it("Join an existing game", async () => {
             // board starting verification proof public / private inputs
             const input = {
                 ships: boards.bob,
@@ -235,20 +229,21 @@ describe('Play Battleship on-chain', async () => {
             await (await game.connect(bob).joinGame(
                 1,
                 F.toObject(boardHashes.bob),
-                args[0],
-                args[1],
-                args[2]
+                args[0], //pi.a
+                args[1][0], //pi.b_0
+                args[1][1], //pi.b_1
+                args[2] //pi.c
             ))
         })
-        xit("opening shot", async () => {
+        it("opening shot", async () => {
             await (await game.connect(alice).firstTurn(1, [1, 0])).wait()
         })
-        xit('Prove hit/ miss for 32 turns', async () => {
+        it('Prove hit/ miss for 32 turns', async () => {
             for (let i = 1; i <= 16; i++) {
                 await simulateTurn(i)
             }
         })
-        xit('Alice wins and receives award on sinking all of Bob\'s ships', async () => {
+        it('Alice wins and receives award on sinking all of Bob\'s ships', async () => {
             // bob's shot hit/miss integrity proof public / private inputs
             const input = {
                 ships: boards.bob,
@@ -271,7 +266,8 @@ describe('Play Battleship on-chain', async () => {
                 true, // hit bool
                 [0, 0], // shot params are ignored on reporting all ships sunk, can be any uint256
                 args[0], // pi.a
-                args[1], // pi.b
+                args[1][0], // pi.b_0
+                args[1][1], // pi.b_1
                 args[2] // pi.c
             )).wait()
         })

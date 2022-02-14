@@ -26,7 +26,6 @@ module.exports = async ({ run, ethers, network, deployments }) => {
             log: true
         }))
     }
-    console.log('ticketAddress', ticketAddress)
     // deploy Battleship Game Contract / Victory token
     const { address: gameAddress } = await deployments.deploy('BattleshipGame', {
         from: operator.address,
@@ -34,32 +33,34 @@ module.exports = async ({ run, ethers, network, deployments }) => {
         log: true
     })
     // verify deployed contracts
-    try {
-        await run('verify:verify', { address: bvAddress })
-    } catch (e) {
-        if (!alreadyVerified(e.toString())) throw new Error()
-    }
-    try {
-        await run('verify:verify', { address: svAddress })
-    } catch (e) {
-        if (!alreadyVerified(e.toString())) throw new Error()
-    }
-    if (network.name !== 'polygon') {
-        try {
-            await run('verify:verify', { address: ticketAddress })
-        } catch (e) {
-            if (!alreadyVerified(e.toString())) throw new Error()
-        }
-    }
-    try {
-        await run('verify:verify', {
-            address: gameAddress,
-            constructorArguments: [bvAddress, svAddress, ticketAddress]
-        })
-    } catch (e) {
-        if (!alreadyVerified(e.toString())) throw new Error()
-    }
-    console.log('Deployment and Verification Success')
+    // try {
+    //     await run('verify:verify', { address: bvAddress })
+    // } catch (e) {
+    //     if (!alreadyVerified(e.toString())) throw new Error()
+    // }
+    // console.log('t')
+    // try {
+    //     await run('verify:verify', { address: svAddress })
+    // } catch (e) {
+    //     if (!alreadyVerified(e.toString())) throw new Error()
+    // }
+    // if (network.name !== 'polygon') {
+    //     try {
+    //         await run('verify:verify', { address: ticketAddress })
+    //     } catch (e) {
+    //         if (!alreadyVerified(e.toString())) throw new Error()
+    //     }
+    // }
+    // console.log('r')
+    // try {
+    //     await run('verify:verify', {
+    //         address: gameAddress,
+    //         constructorArguments: [bvAddress, svAddress, ticketAddress]
+    //     })
+    // } catch (e) {
+    //     if (!alreadyVerified(e.toString())) throw new Error()
+    // }
+    // console.log('Deployment and Verification Success')
 }
 
 /**
