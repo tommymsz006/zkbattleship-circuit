@@ -1,29 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./IVerifier.sol";
-import "hardhat/console.sol";
+import "./IBattleshipGame.sol";
 
-contract BattleshipGame {
-    uint256 constant HIT_MAX = 17;
+contract BattleshipGame is IBattleshipGame {
 
-    event Started(uint256 _nonce);
-    event Joined(uint256 _nonce);
-    event Shot(uint256 _game, uint256 _turn, bool _hit);
-    event Won(address _winner, uint256 _nonce);
-    event Collected(uint256 _amount);
-
-    uint256 gameIndex;
-    address operator;
-
-    mapping(uint256 => Game) public games;
-    mapping(address => uint256) public playing;
-
-    IBoardVerifier bv; // verifier for proving initial board rule compliance
-    IShotVerifier sv; // verifier for proving shot hit/ miss
-
-    IERC20 ticket;
+    /// MODIFIERS ///
 
     /**
      * Ensure only contract owner can collect procedes/ administrate contract
@@ -34,7 +16,7 @@ contract BattleshipGame {
     }
 
     /**
-     * Ensure an address has ZKB spendable tickets and is not currently playing
+     * Ensure a message sender has approved ticket erc20 and is not currently playing another game
      */
     modifier canPlay() {
         require(
@@ -45,8 +27,14 @@ contract BattleshipGame {
         _;
     }
 
+    /**
+     * Determine whether message sender is allowed to call a turn function
+     *
+     * @param _game uint256 - the nonce of the game to check playability for 
+     */
     modifier myTurn(uint256 _game) {
         require(playing[msg.sender] == _game, "!Playing");
+        require(games[_game].winner == address(0), "!Playable");
         address current = games[_game].nonce % 2 == 0
             ? games[_game].participants[0]
             : games[_game].participants[1];
@@ -70,32 +58,34 @@ contract BattleshipGame {
         _;
     }
 
+    /// CONSTRUCTOR ///
+
     /**
      * Construct new instance of Battleship manager
      *
+     * @param _forwarder address - the address of the erc2771 trusted forwarder
      * @param _bv address - the address of the initial board validity prover
      * @param _sv address - the address of the shot hit/miss prover
      * @param _ticket address - the address of the ERC20 token required to be spent to play the game
      */
-    constructor(address _bv, address _sv, address _ticket) {
+    constructor(address _forwarder, address _bv, address _sv, address _ticket) 
+        ERC2771ContextUpgradeable(_forwarder)
+    {
         bv = IBoardVerifier(_bv);
         sv = IShotVerifier(_sv);
         ticket = IERC20(_ticket);
         operator = msg.sender;
     }
 
-    /**
-     * Start a new board by uploading a valid board hash
-     * 
-     * @param _boardHash uint256 - hash of ship placement on board
-     */
+    /// MUTABLE FUNCTIONS ///
+
     function newGame(
         uint256 _boardHash,
         uint256[2] memory a,
         uint256[2] memory b_0,
         uint256[2] memory b_1,
         uint256[2] memory c
-    ) public canPlay {
+    ) external override canPlay {
         require(
             bv.verifyProof(a, [b_0, b_1], c, [_boardHash]),
             "Invalid Board Config!"
@@ -108,10 +98,6 @@ contract BattleshipGame {
         emit Started(gameIndex);
     }
 
-    /**
-     * Join existing game by uploading a valid board hash
-     *
-     */
     function joinGame(
         uint256 _game,
         uint256 _boardHash,
@@ -119,7 +105,7 @@ contract BattleshipGame {
         uint256[2] memory b_0,
         uint256[2] memory b_1,
         uint256[2] memory c
-    ) public canPlay joinable(_game) {
+    ) external override canPlay joinable(_game) {
         require(
             bv.verifyProof(a, [b_0, b_1], c, [_boardHash]),
             "Invalid Board Config!"
@@ -131,27 +117,13 @@ contract BattleshipGame {
         emit Joined(_game);
     }
 
-    /**
-     * Player 0 can makes first shot without providing proof
-     *
-     * @param _game uint256 - the game nonce/ id
-     * @param _shot uint256[2] - the (x,y) coordinate to fire at
-     */
-    function firstTurn(uint256 _game, uint256[2] memory _shot) public myTurn(_game) {
+    function firstTurn(uint256 _game, uint256[2] memory _shot) external override myTurn(_game) {
         Game storage game = games[_game];
         require(game.nonce == 0, "!Turn1");
         game.shots[game.nonce] = _shot;
         game.nonce++;
     }
 
-    /**
-     * Drive game to completion
-     *
-     * @param _game uint256 - the game nonce/ id
-     * @param _hit bool - 1 if previous shot hit and 0 otherwise
-     * @param _next uint256[2] - the (x,y) coordinate to fire at after proving hit/miss
-     *    - ignored if proving hit forces game over
-     */
     function turn(
         uint256 _game,
         bool _hit,
@@ -160,9 +132,9 @@ contract BattleshipGame {
         uint256[2] memory b_0,
         uint256[2] memory b_1,
         uint256[2] memory c
-    ) public myTurn(_game) {
+    ) external override myTurn(_game) {
         Game storage game = games[_game];
-        require(game.nonce != 0, "Turn1");
+        require(game.nonce != 0, "Turn=0");
         // check proof
         uint256 boardHash = game.boards[game.nonce % 2];
         uint256[2] memory shot = game.shots[game.nonce - 1];
@@ -190,6 +162,35 @@ contract BattleshipGame {
         }
     }
 
+    function collectProceeds(address _to) external override onlyOperator {
+        uint256 balance = ticket.balanceOf(address(this));
+        emit Collected(balance);
+        ticket.transfer(_to, balance);
+    }
+
+    /// VIEWABLE FUNCTIONS ///
+
+    function gameState(uint256 _game) external override view returns (
+        address[2] memory _participants,
+        uint256[2] memory _boards,
+        uint256 _turnNonce,
+        uint256[2] memory _hitNonce,
+        address _winner
+    ) {
+        _participants = games[_game].participants;
+        _boards = games[_game].boards;
+        _turnNonce = games[_game].nonce;
+        _hitNonce = games[_game].hitNonce;
+        _winner = games[_game].winner;
+    }
+
+    /// INTERNAL FUNCTIONS ///
+
+    /**
+     * Handle transitioning game to finished state & paying out
+     *
+     * @param _game uint256 - the nonce of the game being finalized
+     */
     function gameOver(uint256 _game) internal {
         Game storage game = games[_game];
         require(
@@ -203,49 +204,4 @@ contract BattleshipGame {
         ticket.transfer(game.winner, 1.95 ether);
         emit Won(game.winner, _game);
     }
-
-    /**
-     * Collect the spent ZKB tickets
-     *
-     * @param _to address - the address the operator wants to receive tokens at
-     */
-    function collectProceeds(address _to) public onlyOperator {
-        uint256 balance = ticket.balanceOf(address(this));
-        emit Collected(balance);
-        ticket.transfer(_to, balance);
-    }
-
-    /**
-     * Return current game info
-     *
-     * @param _game uint256 - id of game to look for
-     * @return _participants address[2] - addresses of host and guest players respectively
-     * @return _boards uint256[2] - hashes of host and guest boards respectively
-     * @return _turnNonce uint256 - the current turn number for the game
-     * @return _hitNonce uint256[2] - the current number of hits host and guest have scored respectively
-     * @return _winner address - if game is won, will show winner
-     */
-    function gameState(uint256 _game) public view returns (
-        address[2] memory _participants,
-        uint256[2] memory _boards,
-        uint256 _turnNonce,
-        uint256[2] memory _hitNonce,
-        address _winner
-    ) {
-        _participants = games[_game].participants;
-        _boards = games[_game].boards;
-        _turnNonce = games[_game].nonce;
-        _hitNonce = games[_game].hitNonce;
-        _winner = games[_game].winner;
-    }
-}
-
-struct Game {
-    address[2] participants; // the two players in the game
-    uint256[2] boards; // mimcsponge hash of board placement for each player
-    uint256 nonce; // turn #
-    mapping(uint256 => uint256[2]) shots; // map turn number to shot coordinates
-    mapping(uint256 => bool) hits; // map turn number to hit/ miss
-    uint256[2] hitNonce; // track # of hits player has made
-    address winner; // game winner
 }
